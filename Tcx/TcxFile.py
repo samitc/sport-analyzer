@@ -1,5 +1,6 @@
 from collections import defaultdict
 
+from Data.GeoPos import GeoPos
 from Xml import Xml
 
 
@@ -33,6 +34,32 @@ class Tcx:
             self.data[treeIndex] = activitis
             Tcx.readActivity(self.data["s" + treeIndex], activitis)
             index = index + 1
+
+    @staticmethod
+    def searchTree(treeData, search):
+        retVal = []
+        for k, v in treeData.items():
+            if str(k).startswith(search):
+                retVal.append(v)
+        return retVal
+
+    def getPointsAndLaps(self):
+        points = []
+        startLaps = []
+        activities = Tcx.searchTree(self.data, "sActivity")
+        if len(activities) > 1:
+            return None
+        for activity in activities:
+            laps = Tcx.searchTree(activity, "sLap")
+            for lap in laps:
+                startLaps.append(len(points))
+                track = lap["s" + "Track"]
+                trackPoints = Tcx.searchTree(track, "sTrackpoint")
+                for trackPoint in trackPoints:
+                    position = trackPoint["s" + "position"]
+                    points.append(
+                        GeoPos(float(position["LatitudeDegrees"].text()), float(position["LongitudeDegrees"].text())))
+        return points, startLaps
 
     @staticmethod
     def readPosition(data, position):

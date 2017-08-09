@@ -10,3 +10,6 @@ class Node:
 
     def findSons(self, sonsName: str):
         return map(Node, self.node.findall(sonsName))
+
+    def text(self):
+        return self.node.text
