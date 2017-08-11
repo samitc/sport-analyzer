@@ -1,6 +1,7 @@
 from collections import defaultdict
 
 from Data.GeoPos import GeoPos
+from Data.Plot import Plot
 from Xml import Xml
 
 
@@ -57,8 +58,12 @@ class Tcx:
                 trackPoints = Tcx.searchTree(track, "sTrackpoint")
                 for trackPoint in trackPoints:
                     position = trackPoint["s" + "position"]
-                    points.append(
-                        GeoPos(float(position["LatitudeDegrees"].text()), float(position["LongitudeDegrees"].text())))
+                    bpm = trackPoint["sBPM"]
+                    points.append(Plot(
+                        GeoPos(float(position["LatitudeDegrees"].text()), float(position["LongitudeDegrees"].text())),
+                        trackPoint["time"].text()
+                        , float(trackPoint["AltitudeMeters"].text()), float(trackPoint["DistanceMeters"].text()),
+                        int(bpm["value"].text())))
         return points, startLaps
 
     @staticmethod
@@ -68,9 +73,15 @@ class Tcx:
 
     @staticmethod
     def readTrackPoint(data, trackPoint):
+        data["time"] = trackPoint.findSon(getFindString("Time"))
+        data["AltitudeMeters"] = trackPoint.findSon(getFindString("AltitudeMeters"))
+        data["DistanceMeters"] = trackPoint.findSon(getFindString("DistanceMeters"))
         position = trackPoint.findSon(getFindString("Position"))
         data["position"] = position
         Tcx.readPosition(data["s" + "position"], position)
+        heartRate = trackPoint.findSon(getFindString("HeartRateBpm"))
+        data["BPM"] = heartRate
+        Tcx.readBPM(data["sBPM"], heartRate);
 
     @staticmethod
     def readTrack(data, track):
@@ -99,3 +110,7 @@ class Tcx:
             data[treeIndex] = lap
             Tcx.readLap(data["s" + treeIndex], lap)
             index = index + 1
+
+    @staticmethod
+    def readBPM(data, heartRate):
+        data["value"] = heartRate.findSon(getFindString("Value"))
