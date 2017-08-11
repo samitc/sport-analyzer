@@ -1,6 +1,7 @@
 from collections import defaultdict
 
 from Data.GeoPos import GeoPos
+from Data.Lap import Lap
 from Data.Plot import Plot
 from Xml import Xml
 
@@ -46,25 +47,47 @@ class Tcx:
 
     def getPointsAndLaps(self):
         points = []
-        startLaps = []
+        lapsD = []
         activities = Tcx.searchTree(self.data, "sActivity")
         if len(activities) > 1:
             return None
         for activity in activities:
             laps = Tcx.searchTree(activity, "sLap")
+            index = 0
             for lap in laps:
-                startLaps.append(len(points))
-                track = lap["s" + "Track"]
+                startLapPos = len(points)
+                track = lap["sTrack"]
                 trackPoints = Tcx.searchTree(track, "sTrackpoint")
                 for trackPoint in trackPoints:
-                    position = trackPoint["s" + "position"]
-                    bpm = trackPoint["sBPM"]
-                    points.append(Plot(
-                        GeoPos(float(position["LatitudeDegrees"].text()), float(position["LongitudeDegrees"].text())),
-                        trackPoint["time"].text()
-                        , float(trackPoint["AltitudeMeters"].text()), float(trackPoint["DistanceMeters"].text()),
-                        int(bpm["value"].text())))
-        return points, startLaps
+                    if trackPoint["position"] is None:
+                        pos = None
+                    else:
+                        position = trackPoint["s" + "position"]
+                        pos = GeoPos(float(position["LatitudeDegrees"].text()),
+                                     float(position["LongitudeDegrees"].text()))
+                    if trackPoint["BPM"] is None:
+                        bpm = None
+                    else:
+                        bpmVal = trackPoint["sBPM"]
+                        bpm = int(bpmVal["value"].text())
+                    if trackPoint["AltitudeMeters"] is None:
+                        alt = None
+                    else:
+                        alt = float(trackPoint["AltitudeMeters"].text())
+                    if trackPoint["DistanceMeters"] is None:
+                        dis = None
+                    else:
+                        dis = float(trackPoint["DistanceMeters"].text())
+                    if bpm is not None or dis is not None or pos is not None or alt is not None:
+                        points.append(Plot(pos, trackPoint["time"].text(), alt, dis, bpm))
+                endLapPos = len(points)
+                avgBpm = lap["savgBPM"]
+                maxBpm = lap["smaxBPM"]
+                lapsD.append(Lap(startLapPos, endLapPos, activity["Lap" + str(index)].attrib("StartTime"),
+                                 float(lap["TotalTimeSeconds"].text()), float(lap["DistanceMeters"].text()),
+                                 float(lap["MaximumSpeed"].text()), int(lap["Calories"].text()),
+                                 int(avgBpm["value"].text()), int(maxBpm["value"].text())))
+        return points, lapsD
 
     @staticmethod
     def readPosition(data, position):
@@ -78,10 +101,12 @@ class Tcx:
         data["DistanceMeters"] = trackPoint.findSon(getFindString("DistanceMeters"))
         position = trackPoint.findSon(getFindString("Position"))
         data["position"] = position
-        Tcx.readPosition(data["s" + "position"], position)
+        if position is not None:
+            Tcx.readPosition(data["s" + "position"], position)
         heartRate = trackPoint.findSon(getFindString("HeartRateBpm"))
         data["BPM"] = heartRate
-        Tcx.readBPM(data["sBPM"], heartRate);
+        if heartRate is not None:
+            Tcx.readBPM(data["sBPM"], heartRate)
 
     @staticmethod
     def readTrack(data, track):
@@ -95,6 +120,16 @@ class Tcx:
 
     @staticmethod
     def readLap(data, lap):
+        data["TotalTimeSeconds"] = lap.findSon(getFindString("TotalTimeSeconds"))
+        data["DistanceMeters"] = lap.findSon(getFindString("DistanceMeters"))
+        data["MaximumSpeed"] = lap.findSon(getFindString("MaximumSpeed"))
+        data["Calories"] = lap.findSon(getFindString("Calories"))
+        avgHeartRate = lap.findSon(getFindString("AverageHeartRateBpm"))
+        data["avgBPM"] = avgHeartRate
+        Tcx.readBPM(data["savgBPM"], avgHeartRate)
+        maxHeartRate = lap.findSon(getFindString("MaximumHeartRateBpm"))
+        data["avgBPM"] = maxHeartRate
+        Tcx.readBPM(data["smaxBPM"], maxHeartRate)
         track = lap.findSon(getFindString("Track"))
         data["Track"] = track
         Tcx.readTrack(data["s" + "Track"], track)

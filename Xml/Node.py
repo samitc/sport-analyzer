@@ -6,10 +6,19 @@ class Node:
         self.node = node
 
     def findSon(self, sonName: str):
-        return Node(self.node.find(sonName))
+        temp = self.node.find(sonName)
+        if temp is None:
+            return None
+        return Node(temp)
 
     def findSons(self, sonsName: str):
-        return map(Node, self.node.findall(sonsName))
+        temp = self.node.findall(sonsName)
+        if temp is None:
+            return None
+        return map(Node, temp)
 
     def text(self):
         return self.node.text
+
+    def attrib(self, attName: str):
+        return self.node.attrib[attName]
