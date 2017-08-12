@@ -20,5 +20,19 @@ class Node:
     def text(self):
         return self.node.text
 
+    def text(self, text):
+        self.node.text = text
+
     def attrib(self, attName: str):
         return self.node.attrib[attName]
+
+    def attrib(self, attName: str, val):
+        self.node.attrib[attName] = val
+
+    def remove(self, son):
+        self.node.remove(son.node)
+
+    def add(self, name, text=None, attrib=dict()):
+        element = etree.SubElement(self.node, name, attrib)
+        element.text = text
+        return Node(element)

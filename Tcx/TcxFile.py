@@ -1,5 +1,6 @@
 from collections import defaultdict
 
+from Data.Activity import Activity
 from Data.GeoPos import GeoPos
 from Data.Lap import Lap
 from Data.Plot import Plot
@@ -46,12 +47,11 @@ class Tcx:
         return retVal
 
     def getPointsAndLaps(self):
-        points = []
-        lapsD = []
+        activitiyies = []
         activities = Tcx.searchTree(self.data, "sActivity")
-        if len(activities) > 1:
-            return None
         for activity in activities:
+            points = []
+            lapsD = []
             laps = Tcx.searchTree(activity, "sLap")
             index = 0
             for lap in laps:
@@ -87,7 +87,15 @@ class Tcx:
                                  float(lap["TotalTimeSeconds"].text()), float(lap["DistanceMeters"].text()),
                                  float(lap["MaximumSpeed"].text()), int(lap["Calories"].text()),
                                  int(avgBpm["value"].text()), int(maxBpm["value"].text())))
-        return points, lapsD
+            activitiyies.append((points, lapsD))
+        return activitiyies
+
+    def getActivities(self):
+        activityies = []
+        activities = self.getPointsAndLaps()
+        for activity in activities:
+            activityies.append(Activity(activity[0], activity[1]))
+        return activityies
 
     @staticmethod
     def readPosition(data, position):
@@ -149,3 +157,15 @@ class Tcx:
     @staticmethod
     def readBPM(data, heartRate):
         data["value"] = heartRate.findSon(getFindString("Value"))
+
+    @staticmethod
+    def combine(tcxFiles):
+        import copy
+        root = copy.deepcopy(tcxFiles[0].getRoot())
+        xml = Xml.Xml(root)
+        root.remove(root.findSon(getFindString("Folders")))
+        root.remove(root.findSon(getFindString("Activities")))
+        folders = root.add("Folders")
+        history = folders.add("History")
+        history.add("Running", None, dict(Name="Running"))
+        xml.write("testFile.tcx")
