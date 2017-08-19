@@ -17,16 +17,16 @@ class Node:
             return None
         return map(Node, temp)
 
-    def text(self):
+    def getText(self):
         return self.node.text
 
-    def text(self, text):
+    def setText(self, text):
         self.node.text = text
 
-    def attrib(self, attName: str):
+    def getAttrib(self, attName: str):
         return self.node.attrib[attName]
 
-    def attrib(self, attName: str, val):
+    def setAttrib(self, attName: str, val):
         self.node.attrib[attName] = val
 
     def remove(self, son):

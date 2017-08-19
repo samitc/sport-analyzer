@@ -63,30 +63,30 @@ class Tcx:
                         pos = None
                     else:
                         position = trackPoint["s" + "position"]
-                        pos = GeoPos(float(position["LatitudeDegrees"].text()),
-                                     float(position["LongitudeDegrees"].text()))
+                        pos = GeoPos(float(position["LatitudeDegrees"].getText()),
+                                     float(position["LongitudeDegrees"].getText()))
                     if trackPoint["BPM"] is None:
                         bpm = None
                     else:
                         bpmVal = trackPoint["sBPM"]
-                        bpm = int(bpmVal["value"].text())
+                        bpm = int(bpmVal["value"].getText())
                     if trackPoint["AltitudeMeters"] is None:
                         alt = None
                     else:
-                        alt = float(trackPoint["AltitudeMeters"].text())
+                        alt = float(trackPoint["AltitudeMeters"].getText())
                     if trackPoint["DistanceMeters"] is None:
                         dis = None
                     else:
-                        dis = float(trackPoint["DistanceMeters"].text())
+                        dis = float(trackPoint["DistanceMeters"].getText())
                     if bpm is not None or dis is not None or pos is not None or alt is not None:
-                        points.append(Plot(pos, trackPoint["time"].text(), alt, dis, bpm))
+                        points.append(Plot(pos, trackPoint["time"].getText(), alt, dis, bpm))
                 endLapPos = len(points)
                 avgBpm = lap["savgBPM"]
                 maxBpm = lap["smaxBPM"]
-                lapsD.append(Lap(startLapPos, endLapPos, activity["Lap" + str(index)].attrib("StartTime"),
-                                 float(lap["TotalTimeSeconds"].text()), float(lap["DistanceMeters"].text()),
-                                 float(lap["MaximumSpeed"].text()), int(lap["Calories"].text()),
-                                 int(avgBpm["value"].text()), int(maxBpm["value"].text())))
+                lapsD.append(Lap(startLapPos, endLapPos, activity["Lap" + str(index)].getAttrib("StartTime"),
+                                 float(lap["TotalTimeSeconds"].getText()), float(lap["DistanceMeters"].getText()),
+                                 float(lap["MaximumSpeed"].getText()), int(lap["Calories"].getText()),
+                                 int(avgBpm["value"].getText()), int(maxBpm["value"].getText())))
             activitiyies.append((points, lapsD))
         return activitiyies
 
